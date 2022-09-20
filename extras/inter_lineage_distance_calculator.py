@@ -38,13 +38,13 @@ if __name__ == '__main__':
     else:
         loglevel = logging.INFO
     logging.basicConfig(level=loglevel, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    
-    
+
+
     # Read in taxonomy
     logging.info("Reading taxonomy..")
     gg = GreenGenesTaxonomy.read(open(args.greengenes_taxonomy)).taxonomy
     logging.info("Read in %i taxonomies" % len(gg))
-    
+
     # Read in sequence
     logging.info("Reading sequences..")
     duplicates = set()
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     for dup in duplicates:
         del sequences[dup]
     logging.info("Read in %i sequences" % len(sequences))
-    
+
     # Ensure that each sequence in the taxonomy has an associated sequence,
     # otherwise delete it
     tax_no_seq = set()
@@ -70,7 +70,7 @@ if __name__ == '__main__':
     for name in tax_no_seq:
         del gg[name]
     logging.info("After deleting no-seq taxonomies now have %i taxes" % len(gg))
-    
+
     # Create recursive hash of taxonomy ending in sequences
     taxonomic_prefixes = string.split('k p c o f g s')
     class LineageOrLeaf:
@@ -96,8 +96,8 @@ if __name__ == '__main__':
             if self.parent is not None:
                 rep += " parent %s" % self.parent.name
             return rep
-                                                                  
-            
+
+
     root = LineageOrLeaf(None, 'root', -1)
     #TODO: this doesn't require a consistent (monophyletic) taxonomy I don't think, it probly should.
     for name, splits in gg.items():
@@ -119,7 +119,7 @@ if __name__ == '__main__':
         if len(splits) == count and count == len(taxonomic_prefixes):
             last.children[s] = sequences[name]
             last.is_leaf = True
-            
+
     # Prune the LineageOrLeaf tree so that all lineages have at least one sequence
     stack = [root]
     last_rank = len(taxonomic_prefixes)-1
@@ -153,8 +153,8 @@ if __name__ == '__main__':
         else:
             for child in current.children.values():
                 stack.append(child)
-    
-    
+
+
     # Iterate over the taxonomy, calculating distances, calculating a distance between a random choice from each pair of lineages, reporting as we go.
     # This is DEAD code because vsearch was insufficiently sensitive.
     def vsearch_id(seq0, seq1):
@@ -171,8 +171,8 @@ if __name__ == '__main__':
                 
                 import IPython; IPython.embed()
                 result = extern.run("vsearch --usearch_global %s --db %s --userfields id0 --userout /dev/stdout" % (f.name, g.name))
-                print result
-                
+                print(result)
+
     def compare(seq0, seq1):
         matches = 0
         mismatches = 0
@@ -185,13 +185,13 @@ if __name__ == '__main__':
             else:
                 mismatches+=1
         return float(matches)/(matches+mismatches)
-                
+
     q = queue.Queue()
     q.put(root)
     while not q.empty():
         current = q.get()
         logging.debug("Finding examples from %s" % current)
-        
+
         # choose an example from each pair of lineages
         for pair in itertools.combinations(current.children, 2):
             first = current.children[pair[0]]
@@ -200,16 +200,14 @@ if __name__ == '__main__':
             example1 = second.example_sequence()
             dist = compare(example0, example1)
             if current.rank == -1: break
-            
-            print "\t".join([taxonomic_prefixes[current.rank],
+
+            print("\t".join([taxonomic_prefixes[current.rank],
                              current.name,
                              example0, example1,
                              str(dist)
                              ])
-            
+            )
+
         if current.rank < last_rank:
             for child in current.children.values():
                 q.put(child)
-            
-            
-

@@ -308,8 +308,8 @@ rule create_draft_SingleM_metapackage:
 rule SingleM_transcripts:
     input:
         dir = config["gtdb_protein_fna_reps"],
-        shadow_dir = output_dir + "/shadow_GTDB/prodigal",
-        shadow_touch = output_dir + "/shadow_GTDB/prodigal/rename_done",
+        #shadow_dir = output_dir + "/shadow_GTDB/prodigal",
+        #shadow_touch = output_dir + "/shadow_GTDB/prodigal/rename_done",
         metapackage = output_dir + "/draft_metapackage.smpkg"
     output:
         dir = directory(output_dir + "/transcripts"),
@@ -322,13 +322,13 @@ rule SingleM_transcripts:
         "../../singlem.yml"
     shell:
         "mkdir -p {params.logs} "
-        "&& cat <( find {input.dir} -name '*.fna' ) <( find {input.shadow_dir} -name '*.fna' ) "
+        "&& cat <( find {input.dir} -name '*.fna' ) " #" <( find {input.shadow_dir} -name '*.fna' ) "
         "| parallel -j {threads} "
         "{params.singlem} pipe "
         "--forward {{}} "
         "--singlem-metapackage {input.metapackage} "
         "--otu-table {output.dir}/{{/.}}.otu_table.tsv "
-        "--no-assign-taxonomy "
+        "--" # "--no-assign-taxonomy "
         "'&>' {params.logs}/{{/.}}.log "
         "&& touch {output.touch}"
 

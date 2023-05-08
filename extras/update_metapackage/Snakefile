@@ -109,6 +109,46 @@ rule mfqe:
         "scripts/mfqe_all.py"
 
 ########################
+### Decoy generation ###
+########################
+rule genome_simulation:
+    output:
+        output_dir + "/decoys/sim.done",
+    params:
+        genome_ids = genomes,
+        output_dir = output_dir + "/decoys/simulations",
+        logs_dir = logs_dir + "/wgsim",
+    conda:
+        "envs/wgsim.yml"
+    threads:
+        config["max_threads"]
+    script:
+        "scripts/genome_simulation_all.py"
+
+rule export_decoys:
+    input:
+        output_dir + "/decoys/sim.done",
+    output:
+        output_dir + "/decoys/{spkg}.done"
+    params:
+        spkg = config["metapackage"] + "/{spkg}.spkg",
+        sim_dir = output_dir + "/decoys/simulations",
+    conda:
+        "../../singlem.yml"
+    threads:
+        config["max_threads"]
+    script:
+        "scripts/export_decoys_all.py"
+
+rule collect_decoys:
+    input:
+        expand(output_dir + "/decoys/{spkg}.done", spkg = hmms_and_names.index)
+    output:
+        output_dir + "/decoys/all.done"
+    shell:
+        "touch {output}"
+
+########################
 ### Package creation ###
 ########################
 rule transpose_hmms_with_sequences:
